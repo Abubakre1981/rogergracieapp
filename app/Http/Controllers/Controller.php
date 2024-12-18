@@ -2,52 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller as BaseController;
 
-class UserController extends Controller
+class Controller extends BaseController
 {
-    /**
-     * Voeg een nieuwe gebruiker toe.
-     */
-    public function addUser(Request $request)
-    {
-        // Validatie van invoergegevens
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role' => 'required|in:user,admin',
-        ]);
-
-        // Controleer of validatie faalt
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validatiefouten',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        try {
-            // Maak een nieuwe gebruiker aan
-            $user = User::create([
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'password' => bcrypt($request->input('password')), // Zorg dat het wachtwoord gehashed wordt
-                'role' => $request->input('role'),
-            ]);
-
-            return response()->json([
-                'message' => 'Gebruiker succesvol aangemaakt',
-                'user' => $user,
-            ], 201);
-        } catch (\Exception $e) {
-            // Fout bij aanmaken van gebruiker
-            return response()->json([
-                'message' => 'Er is een fout opgetreden bij het aanmaken van de gebruiker',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 }

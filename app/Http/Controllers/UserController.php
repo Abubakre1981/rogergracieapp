@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -14,7 +14,13 @@ class UserController extends Controller
      */
     public function addUser(Request $request)
     {
-        // Validatie van invoer
+        // Stap 1: Log de volledige inkomende request data
+        Log::info('Ontvangen request data in addUser:', ['data' => $request->all()]);
+
+        // Stap 2: Gebruik dd() om de input te dumpen en hier te stoppen
+        dd($request->all());
+
+        // Stap 3: Validatie van invoergegevens
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -22,7 +28,9 @@ class UserController extends Controller
             'role' => 'required|in:user,admin',
         ]);
 
+        // Controleer of validatie faalt
         if ($validator->fails()) {
+            Log::error('Validatie fouten:', ['errors' => $validator->errors()]);
             return response()->json([
                 'message' => 'Validatiefouten',
                 'errors' => $validator->errors(),
@@ -30,18 +38,25 @@ class UserController extends Controller
         }
 
         try {
-            $user = User::createNewUser([
+            // Stap 4: Maak een nieuwe gebruiker aan en log de details
+            Log::info('Poging om een nieuwe gebruiker aan te maken');
+            $user = User::create([
                 'name' => $request->input('name'),
                 'email' => $request->input('email'),
-                'password' => $request->input('password'),
+                'password' => bcrypt($request->input('password')),
                 'role' => $request->input('role'),
             ]);
+
+            Log::info('Nieuwe gebruiker succesvol aangemaakt:', ['user' => $user]);
 
             return response()->json([
                 'message' => 'Gebruiker succesvol aangemaakt',
                 'user' => $user,
             ], 201);
+
         } catch (\Exception $e) {
+            // Stap 5: Log de fout en stuur een foutmelding terug
+            Log::error('Fout bij het aanmaken van gebruiker:', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Er is een fout opgetreden bij het aanmaken van de gebruiker',
                 'error' => $e->getMessage(),
